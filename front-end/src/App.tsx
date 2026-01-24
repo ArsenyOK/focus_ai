@@ -313,7 +313,7 @@ export default function OneScreenMvpUi() {
 
       {/* Footer */}
       <div className="mx-auto max-w-6xl px-4 pb-8 text-xs text-muted-foreground">
-        MVP: один экран. Дальше добавим историю планов и оплату.
+        Coming soon.
       </div>
     </div>
   );
