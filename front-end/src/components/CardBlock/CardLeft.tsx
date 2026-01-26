@@ -130,7 +130,7 @@ const CardLeft = ({
             <Button
               onClick={onGenerate}
               disabled={loading || !input.trim()}
-              className="rounded-full"
+              className="rounded-full cursor-pointer"
             >
               {loading ? "Generating..." : "Generate plan"}
             </Button>
