@@ -32,7 +32,7 @@ const planSchema = z.object({
   firstAction: z.string(),
 });
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/", (_req, res) => res.json({ ok: true }));
 
 app.post("/api/plan", async (req, res) => {
   const parsed = bodySchema.safeParse(req.body);
@@ -104,7 +104,7 @@ Rules:
   }
 });
 
-const port = Number(process.env.PORT || 3001);
+const port = Number(process.env.PORT || 5001);
 app.listen(port, () => {
   console.log(`API running on http://localhost:${port}`);
 });
