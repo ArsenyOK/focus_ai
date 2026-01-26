@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+
 type ToastProps = {
   toast: {
     open: boolean;
@@ -12,7 +14,7 @@ export const ToastMessage = ({ toast, onClose }: ToastProps) => {
   return (
     <div
       className={[
-        "fixed right-4 top-4 z-[60] w-[320px] rounded-2xl border bg-background/90 p-3 shadow-lg backdrop-blur",
+        "fixed right-4 top-4 z-[60] w-[320px] rounded-2xl bg-[#121D2F] border p-3 shadow-lg backdrop-blur",
         "transition-all duration-200 ease-out",
         toast.open
           ? "translate-y-0 opacity-100"
@@ -31,7 +33,7 @@ export const ToastMessage = ({ toast, onClose }: ToastProps) => {
           </div>
 
           {toast.description && (
-            <div className="mt-1 text-sm text-muted-foreground">
+            <div className="mt-1 text-sm text-muted-foreground text-white">
               {toast.description}
             </div>
           )}
@@ -40,9 +42,9 @@ export const ToastMessage = ({ toast, onClose }: ToastProps) => {
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+          className="rounded-lg px-2 text-white py-1 text-xs text-muted-foreground cursor-pointer"
         >
-          ✕
+          <X />
         </button>
       </div>
     </div>
