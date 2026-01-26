@@ -9,6 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 
 interface CardRightProps {
   plan: {
@@ -27,19 +29,34 @@ const CardRight = ({
   loading,
   includeTime,
 }: CardRightProps) => {
-  const onCopy = () => {
+  const [copy, setCopy] = useState<boolean>(false);
+
+  const onCopy = async () => {
     if (!plan) return;
+
     const text = [
       plan.title,
       "",
       ...plan.steps.map(
         (s, i) =>
-          `${i + 1}. ${s.title}${s.details ? ` — ${s.details}` : ""}${includeTime && s.eta ? ` (${s.eta})` : ""}`,
+          `${i + 1}. ${s.title}${s.details ? ` — ${s.details}` : ""}${
+            includeTime && s.eta ? ` (${s.eta})` : ""
+          }`,
       ),
       "",
       `Первое действие: ${plan.firstAction}`,
     ].join("\n");
-    navigator.clipboard?.writeText(text);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopy(true);
+
+      setTimeout(() => {
+        setCopy(false);
+      }, 1800);
+    } catch (e) {
+      console.error("Copy failed", e);
+    }
   };
 
   return (
@@ -68,11 +85,23 @@ const CardRight = ({
 
               <div className="flex items-center gap-2">
                 <Button
+                  disabled={copy}
                   variant="outline"
-                  className="rounded-full"
+                  size="sm"
                   onClick={onCopy}
+                  className="rounded-full gap-2 transition-all duration-200 ease-out"
                 >
-                  Copy
+                  {copy ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-600" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
