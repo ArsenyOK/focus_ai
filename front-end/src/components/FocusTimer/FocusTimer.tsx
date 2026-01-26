@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Pause, Play, RotateCcw, X } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
@@ -126,9 +127,9 @@ export const FocusTimer = ({
       ref={dragRef}
       style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
       className={cn(
-        "fixed left-0 top-0 z-50 w-[260px] select-none rounded-2xl border bg-background/90 p-3 shadow-lg backdrop-blur",
+        "fixed left-0 top-0 z-50 w-[260px] select-none rounded-2xl border p-3 shadow-lg backdrop-blur",
         isRunning &&
-          "ring-2 ring-indigo-500/50 shadow-[0_0_24px_rgba(99,102,241,0.25)]",
+          "shadow-[0_0_24px_rgba(99,102,241,0.25)]",
       )}
     >
       <div
@@ -140,67 +141,64 @@ export const FocusTimer = ({
             dy: e.clientY - (rect?.top ?? 0),
           };
         }}
-        className="flex cursor-grab items-center justify-between gap-2 rounded-xl px-2 py-1 active:cursor-grabbing"
+        className="flex cursor-grab items-center justify-between gap-2 rounded-xl active:cursor-grabbing"
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Focus timer
-          </span>
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-500/80" />
+          
         </div>
         <button
           onClick={onClose}
-          className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+          className="rounded-lg p-1 cursor-pointer text-xs text-muted-foreground hover:bg-muted"
           type="button"
         >
-          ✕
+          <X />
         </button>
       </div>
 
-      <div className="mt-2 flex items-end justify-between px-2">
-        <div className="text-2xl font-semibold tabular-nums">
+      <div className=" flex justify-center px-2">
+        <div className="text-4xl font-semibold tabular-nums">
           {formatTime(secondsLeft)}
         </div>
-        <div className="text-xs text-muted-foreground">
+        {/* <div className="text-xs text-muted-foreground">
           {secondsLeft === 0 ? "Time’s up" : isRunning ? "Running" : "Paused"}
-        </div>
+        </div> */}
       </div>
 
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full transition-all duration-300"
+          className="h-full rounded-full transition-all duration-300 bg-black"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
         {isRunning ? (
-          <Button size="sm" className="rounded-full" onClick={onPause}>
-            Pause
+          <Button size="sm" variant="outline" className="rounded-full cursor-pointer" onClick={onPause}>
+            <Pause />
           </Button>
         ) : (
-          <Button size="sm" className="rounded-full" onClick={onResume}>
-            Resume
+          <Button size="sm" variant="outline" className="rounded-full cursor-pointer" onClick={onResume}>
+            <Play />
           </Button>
         )}
 
         <Button
           size="sm"
           variant="outline"
-          className="rounded-full"
+          className="rounded-full cursor-pointer"
           onClick={onReset}
         >
-          Reset
+          <RotateCcw />
         </Button>
 
-        <Button
+        {/* <Button
           size="sm"
           variant="outline"
           className="rounded-full"
           onClick={onClose}
         >
           Hide
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

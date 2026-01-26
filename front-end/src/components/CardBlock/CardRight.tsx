@@ -26,6 +26,7 @@ interface CardRightProps {
   onGenerate: () => void;
   loading: boolean;
   includeTime: boolean;
+  clearAll: () => void;
 }
 
 const CardRight = ({
@@ -33,8 +34,9 @@ const CardRight = ({
   onGenerate,
   loading,
   includeTime,
+  clearAll,
 }: CardRightProps) => {
-  const FOCUS_SECONDS = 10 * 1;
+  const FOCUS_SECONDS = 10 * 60;
 
   const [copy, setCopy] = useState<boolean>(false);
   const { toast, showToast, hideToast } = useToastMessage();
@@ -72,12 +74,6 @@ const CardRight = ({
     }
   };
 
-  const formatTime = (total: number) => {
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-
   const onStart = () => {
     if (secondsLeft === 0) setSecondsLeft(FOCUS_SECONDS);
     setTimerOpen(true);
@@ -93,7 +89,10 @@ const CardRight = ({
     setIsRunning(false);
     setSecondsLeft(FOCUS_SECONDS);
   };
-  const onCloseTimer = () => setTimerOpen(false);
+  const onCloseTimer = () => {
+    setTimerOpen(false);
+    onReset();
+  };
 
   const onDone = () => {
     setIsRunning(false);
@@ -102,9 +101,14 @@ const CardRight = ({
 
     showToast({
       kind: "success",
-      title: "Отлично! ✅",
+      title: "Отлично!",
       description: "Первое действие выполнено.",
     });
+  };
+
+  const handleClearPlan = () => {
+    clearAll();
+    onReset();
   };
 
   useEffect(() => {
@@ -118,7 +122,7 @@ const CardRight = ({
 
           showToast({
             kind: "warning",
-            title: "Время вышло ⏳",
+            title: "Время вышло",
             description: "Закрой задачу или перезапусти 10 минут.",
           });
           onCloseTimer();
@@ -206,7 +210,10 @@ const CardRight = ({
                   Save
                 </Button>
 
-                <Button className="rounded-full cursor-pointer" disabled>
+                <Button
+                  onClick={handleClearPlan}
+                  className="rounded-full cursor-pointer"
+                >
                   Clear
                 </Button>
               </div>
@@ -262,7 +269,7 @@ const CardRight = ({
                     Start 10 min
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="rounded-full cursor-pointer"
                     onClick={onDone}
                   >

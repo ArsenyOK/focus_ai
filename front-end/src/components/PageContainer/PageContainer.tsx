@@ -48,6 +48,12 @@ const PageContainer = () => {
     return { plan };
   };
 
+  const clearAll = () => {
+    setInput('');
+    setPlan(null);
+    setLoading(false);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b">
@@ -92,6 +98,7 @@ const PageContainer = () => {
           onGenerate={onGenerate}
           loading={loading}
           includeTime={includeTime}
+          clearAll={clearAll}
         />
       </div>
 
