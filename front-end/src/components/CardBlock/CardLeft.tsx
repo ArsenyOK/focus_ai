@@ -53,6 +53,7 @@ const CardLeft = ({
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          disabled={loading}
           placeholder='Например: "Хочу найти работу, подтянуть английский и начать свой проект, но всё смешалось..."'
           className="min-h-[160px] resize-none rounded-2xl"
         />
@@ -65,10 +66,18 @@ const CardLeft = ({
               className="w-full sm:w-auto"
             >
               <TabsList className="rounded-full">
-                <TabsTrigger value="fast" className="rounded-full">
+                <TabsTrigger
+                  disabled={loading}
+                  value="fast"
+                  className="rounded-full"
+                >
                   Fast
                 </TabsTrigger>
-                <TabsTrigger value="deep" className="rounded-full">
+                <TabsTrigger
+                  disabled={loading}
+                  value="deep"
+                  className="rounded-full"
+                >
                   Deep
                 </TabsTrigger>
               </TabsList>
@@ -82,10 +91,18 @@ const CardLeft = ({
               className="w-full sm:w-auto"
             >
               <TabsList className="rounded-full">
-                <TabsTrigger value="strict" className="rounded-full">
+                <TabsTrigger
+                  disabled={loading}
+                  value="strict"
+                  className="rounded-full"
+                >
                   Strict
                 </TabsTrigger>
-                <TabsTrigger value="soft" className="rounded-full">
+                <TabsTrigger
+                  value="soft"
+                  className="rounded-full"
+                  disabled={loading}
+                >
                   Soft
                 </TabsTrigger>
               </TabsList>
@@ -95,6 +112,7 @@ const CardLeft = ({
               <Switch
                 id="time"
                 checked={includeTime}
+                disabled={loading}
                 onCheckedChange={(v) => setIncludeTime(Boolean(v))}
               />
               <Label htmlFor="time" className="text-sm text-muted-foreground">

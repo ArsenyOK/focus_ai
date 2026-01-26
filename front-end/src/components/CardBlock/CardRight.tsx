@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface CardRightProps {
   plan: {
@@ -60,7 +61,13 @@ const CardRight = ({
   };
 
   return (
-    <Card className="rounded-2xl hover:shadow-lg transition-shadow">
+    <Card
+      className={cn(
+        "rounded-2xl hover:shadow-lg transition-shadow transition-all duration-300",
+        loading &&
+          "ring-2 ring-indigo-500 animate-[neon_1.6s_ease-in-out_infinite]",
+      )}
+    >
       <CardHeader>
         <CardTitle className="text-lg">Твой план</CardTitle>
         <CardDescription>
@@ -132,8 +139,8 @@ const CardRight = ({
                           {idx + 1}. {s.title}
                         </div>
                         {s.details && (
-                          <div className="text-sm text-muted-foreground">
-                            {s.details}
+                          <div className="mt-1 border-l-2 border-gray-200 pl-3">
+                            <p className="text-sm text-gray-700">{s.details}</p>
                           </div>
                         )}
                       </div>
