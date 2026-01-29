@@ -27,6 +27,8 @@ interface CardRightProps {
   loading: boolean;
   includeTime: boolean;
   clearAll: () => void;
+  changeInput: boolean;
+  input: string;
 }
 
 const CardRight = ({
@@ -35,6 +37,8 @@ const CardRight = ({
   loading,
   includeTime,
   clearAll,
+  changeInput,
+  input,
 }: CardRightProps) => {
   const FOCUS_SECONDS = 10 * 60;
 
@@ -201,7 +205,7 @@ const CardRight = ({
                   variant="outline"
                   className="rounded-full cursor-pointer"
                   onClick={onGenerate}
-                  disabled={loading}
+                  disabled={loading || changeInput || !input}
                 >
                   Regenerate
                 </Button>
