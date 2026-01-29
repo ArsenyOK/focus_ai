@@ -21,6 +21,7 @@ const PageContainer = () => {
   const [mode, setMode] = useState<"fast" | "deep">("fast");
   const [tone, setTone] = useState<"strict" | "soft">("strict");
   const [includeTime, setIncludeTime] = useState(true);
+  const [messageChanged, setMessageChanged] = useState<string>("");
 
   const remaining = 3;
 
@@ -31,6 +32,7 @@ const PageContainer = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input, mode, tone, includeTime }),
     });
+    setMessageChanged(input);
 
     if (!planRes.ok) {
       const errText = await planRes.text();
@@ -48,11 +50,16 @@ const PageContainer = () => {
     return { plan };
   };
 
+  const normalize = (v: string) => v.trim();
+
+  const hasInputChanged =
+    !!messageChanged && normalize(input) === normalize(messageChanged);
+
   const clearAll = () => {
-    setInput('');
+    setInput("");
     setPlan(null);
     setLoading(false);
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +101,8 @@ const PageContainer = () => {
         />
 
         <CardRight
-        input={input}
+          input={input}
+          changeInput={hasInputChanged}
           plan={plan}
           onGenerate={onGenerate}
           loading={loading}
