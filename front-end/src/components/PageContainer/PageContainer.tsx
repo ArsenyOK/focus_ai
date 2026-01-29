@@ -94,6 +94,7 @@ const PageContainer = () => {
         />
 
         <CardRight
+        input={input}
           plan={plan}
           onGenerate={onGenerate}
           loading={loading}

@@ -27,6 +27,7 @@ interface CardRightProps {
   loading: boolean;
   includeTime: boolean;
   clearAll: () => void;
+  input: string;
 }
 
 const CardRight = ({
@@ -35,6 +36,7 @@ const CardRight = ({
   loading,
   includeTime,
   clearAll,
+  input,
 }: CardRightProps) => {
   const FOCUS_SECONDS = 10 * 60;
 
@@ -45,6 +47,7 @@ const CardRight = ({
   const [timerOpen, setTimerOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(FOCUS_SECONDS);
+  const [changeInput, setChangeInput] = useState("");
 
   const onCopy = async () => {
     if (!plan) return;
@@ -141,6 +144,12 @@ const CardRight = ({
     setSecondsLeft(FOCUS_SECONDS);
   }, [plan?.firstAction]);
 
+  console.info(changeInput === input, "changeInput === input");
+
+  useEffect(() => {
+    setChangeInput(input);
+  }, []);
+
   return (
     <Card
       className={cn(
@@ -201,7 +210,7 @@ const CardRight = ({
                   variant="outline"
                   className="rounded-full cursor-pointer"
                   onClick={onGenerate}
-                  disabled={loading}
+                  disabled={loading || changeInput === input}
                 >
                   Regenerate
                 </Button>
