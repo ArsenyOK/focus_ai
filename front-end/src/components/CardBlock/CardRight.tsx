@@ -36,7 +36,7 @@ interface CardRightProps {
   isRunning: boolean;
   setIsRunning: (running: boolean) => void;
   secondsLeft: number;
-  setSecondsLeft: (seconds: number) => void;
+  setSecondsLeft: React.Dispatch<React.SetStateAction<number>>;
   timerOpen: boolean;
   setTimerOpen: (open: boolean) => void;
 }
@@ -128,11 +128,10 @@ const CardRight = ({
     if (!isRunning) return;
 
     const id = window.setInterval(() => {
-      setSecondsLeft((s) => {
+      setSecondsLeft((s: number) => {
         if (s <= 1) {
           window.clearInterval(id);
           setIsRunning(false);
-
           showToast({
             kind: "warning",
             title: "Время вышло",
