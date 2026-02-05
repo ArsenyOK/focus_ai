@@ -13,6 +13,8 @@ import {
 import Footer from "../Footer/Footer";
 import CardRight from "../CardBlock/CardRight";
 import CardLeft from "../CardBlock/CardLeft";
+import { useToastMessage } from "@/hooks/useToastMessage";
+import { ToastMessage } from "../ToastMessage/ToastMessage";
 
 type Plan = {
   title: string;
@@ -24,15 +26,18 @@ const PageContainer = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<"fast" | "deep">("fast");
   const [tone, setTone] = useState<"strict" | "soft">("strict");
   const [includeTime, setIncludeTime] = useState(true);
   const [messageChanged, setMessageChanged] = useState<string>("");
+  const { toast, showToast, hideToast } = useToastMessage();
 
   const remaining = 3;
 
   const onGenerate = async () => {
+    setPlan(null);
     setLoading(true);
     const planRes = await fetch("http://localhost:5001/api/plan", {
       method: "POST",
@@ -43,7 +48,25 @@ const PageContainer = () => {
 
     if (!planRes.ok) {
       const errText = await planRes.text();
+      const err = await planRes.json().catch(() => ({}));
       setLoading(false);
+
+      if (planRes.status === 400) {
+        setInputError(err.message ?? "Invalid input");
+        showToast({
+          kind: "error",
+          title: "Invalid input",
+          description: "Please add more detail.",
+        });
+        return;
+      }
+
+      showToast({
+        kind: "error",
+        title: "Something went wrong",
+        description:
+          "The server is temporarily unavailable. Please try again in a moment.",
+      });
       throw new Error(`Plan error: ${planRes.status} ${errText}`);
     }
 
@@ -70,6 +93,7 @@ const PageContainer = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ToastMessage toast={toast} onClose={hideToast} />
       <div className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -98,20 +122,10 @@ const PageContainer = () => {
               </DialogTrigger>
               <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
-                  {/* <DialogTitle>
-                    “Billing coming soon. You’re on free plan (3/day).
-                  </DialogTitle> */}
                   <DialogDescription>
                     Billing coming soon. You’re on free plan (3/day).
                   </DialogDescription>
                 </DialogHeader>
-                {/* <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline" className="cursor-pointer">
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                </DialogFooter> */}
               </DialogContent>
             </Dialog>
           </div>
@@ -130,6 +144,8 @@ const PageContainer = () => {
           setIncludeTime={setIncludeTime}
           onGenerate={onGenerate}
           loading={loading}
+          setInputError={setInputError}
+          inputError={inputError}
         />
 
         <CardRight

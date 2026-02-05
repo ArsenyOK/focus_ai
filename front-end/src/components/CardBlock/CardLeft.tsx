@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface CardLeftProps {
   input: string;
@@ -24,6 +25,8 @@ interface CardLeftProps {
   setIncludeTime: (includeTime: boolean) => void;
   onGenerate: () => void;
   loading: boolean;
+  inputError: string | null;
+  setInputError: (error: string | null) => void;
 }
 
 const CardLeft = ({
@@ -37,6 +40,8 @@ const CardLeft = ({
   setIncludeTime,
   onGenerate,
   loading,
+  inputError,
+  setInputError,
 }: CardLeftProps) => {
   return (
     <Card className="rounded-2xl hover:shadow-lg transition-shadow">
@@ -52,10 +57,17 @@ const CardLeft = ({
       <CardContent className="space-y-4">
         <Textarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (inputError) setInputError(null);
+          }}
           disabled={loading}
           placeholder='Например: "Хочу найти работу, подтянуть английский и начать свой проект, но всё смешалось..."'
-          className="min-h-[160px] resize-none rounded-2xl"
+          className={cn(
+            "min-h-[160px] resize-none rounded-2xl transition-all duration-200",
+            inputError &&
+              "border-red-500 ring-2 ring-red-500/40 focus-visible:ring-red-500",
+          )}
         />
 
         <div className="rounded-2xl border bg-muted/30 p-3">

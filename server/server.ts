@@ -11,7 +11,15 @@ app.use(express.json({ limit: "1mb" }));
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const bodySchema = z.object({
-  input: z.string().min(5).max(4000),
+  input: z
+    .string()
+    .transform((s) => s.trim())
+    .refine((s) => s.length >= 10, {
+      message: "Input is too short. Please add more detail.",
+    })
+    .refine((s) => /[A-Za-zА-Яа-яІіЇїЄє]/.test(s), {
+      message: "Please describe your goal using words, not only symbols.",
+    }),
   mode: z.enum(["fast", "deep"]).default("fast"),
   tone: z.enum(["strict", "soft"]).default("strict"),
   includeTime: z.boolean().default(true),
@@ -37,10 +45,10 @@ app.get("/", (_req, res) => res.json({ ok: true }));
 app.post("/api/plan", async (req, res) => {
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
-    return res
-      .status(400)
-      .json({ error: "Invalid request", details: parsed.error.flatten() });
-  }
+  const msg =
+    parsed.error.issues?.[0]?.message ?? "Invalid request";
+  return res.status(400).json({ error: "Invalid request", message: msg });
+}
 
   const { input, mode, tone, includeTime } = parsed.data;
 
