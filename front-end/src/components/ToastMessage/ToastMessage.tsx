@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 type ToastProps = {
   toast: {
     open: boolean;
-    kind: "success" | "warning";
+    kind: "success" | "warning" | "error";
     title: string;
     description?: string;
   };
@@ -26,7 +26,11 @@ export const ToastMessage = ({ toast, onClose }: ToastProps) => {
           <div
             className={[
               "text-sm font-semibold",
-              toast.kind === "success" ? "text-emerald-600" : "text-amber-600",
+              toast.kind === "success"
+                ? "text-emerald-600"
+                : toast.kind === "error"
+                  ? "text-red-500"
+                  : "text-amber-600",
             ].join(" ")}
           >
             {toast.title}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export type ToastKind = "success" | "warning";
+export type ToastKind = "success" | "warning" | "error";
 
 export type ToastState = {
   open: boolean;
