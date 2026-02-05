@@ -2,6 +2,13 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import Footer from "../Footer/Footer";
 import CardRight from "../CardBlock/CardRight";
@@ -79,9 +86,34 @@ const PageContainer = () => {
             <Badge variant="secondary" className="rounded-full">
               {remaining} free left
             </Badge>
-            <Button variant="outline" className="rounded-full">
-              Upgrade
-            </Button>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="rounded-full cursor-pointer"
+                >
+                  Upgrade
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  {/* <DialogTitle>
+                    “Billing coming soon. You’re on free plan (3/day).
+                  </DialogTitle> */}
+                  <DialogDescription>
+                    Billing coming soon. You’re on free plan (3/day).
+                  </DialogDescription>
+                </DialogHeader>
+                {/* <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" className="cursor-pointer">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                </DialogFooter> */}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
