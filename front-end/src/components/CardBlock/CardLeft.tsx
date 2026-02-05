@@ -74,7 +74,7 @@ const CardLeft = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Tabs
               value={mode}
-              onValueChange={(v) => setMode(v as any)}
+              onValueChange={(v) => setMode(v as "fast" | "deep")}
               className="w-full sm:w-auto"
             >
               <TabsList className="rounded-full">
@@ -99,7 +99,7 @@ const CardLeft = ({
 
             <Tabs
               value={tone}
-              onValueChange={(v) => setTone(v as any)}
+              onValueChange={(v) => setTone(v as "strict" | "soft")}
               className="w-full sm:w-auto"
             >
               <TabsList className="rounded-full">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,10 @@ const PageContainer = () => {
   const [includeTime, setIncludeTime] = useState(true);
   const [messageChanged, setMessageChanged] = useState<string>("");
   const { toast, showToast, hideToast } = useToastMessage();
+  const [isRunning, setIsRunning] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isFirstActionDone, setIsFirstActionDone] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
 
   const normalize = (v: string) => v.trim();
 
@@ -41,9 +45,17 @@ const PageContainer = () => {
 
   const remaining = 3;
 
+  const onResetTimer = useCallback(() => {
+    setIsRunning(false);
+    setSecondsLeft(10 * 60);
+    setIsFirstActionDone(false);
+  }, []);
+
   const onGenerate = async () => {
     setPlan(null);
     setLoading(true);
+    onResetTimer();
+    setTimerOpen(false);
     const planRes = await fetch("http://localhost:5001/api/plan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -165,6 +177,15 @@ const PageContainer = () => {
           loading={loading}
           includeTime={includeTime}
           clearAll={clearAll}
+          onReset={onResetTimer}
+          isFirstActionDone={isFirstActionDone}
+          setIsFirstActionDone={setIsFirstActionDone}
+          isRunning={isRunning}
+          setIsRunning={setIsRunning}
+          secondsLeft={secondsLeft}
+          setSecondsLeft={setSecondsLeft}
+          timerOpen={timerOpen}
+          setTimerOpen={setTimerOpen}
         />
       </div>
 
