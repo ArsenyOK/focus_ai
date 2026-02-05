@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Pause, Play, RotateCcw, X } from "lucide-react";
@@ -35,28 +35,22 @@ export const FocusTimer = ({
 }: Props) => {
   const STORAGE_KEY = "focus_timer_pos_v1";
 
-  const defaultPos = useMemo(() => ({ x: 24, y: 24 }), []);
-  const [pos, setPos] = useState<{ x: number; y: number }>(() => {
+  const getInitialPos = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultPos;
-      return JSON.parse(raw);
-    } catch {
-      return defaultPos;
-    }
-  });
+      if (raw) return JSON.parse(raw);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const x = Math.max(24, window.innerWidth - 320);
-        const y = Math.max(24, window.innerHeight - 220);
-        setPos({ x, y });
-      }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      const x = Math.max(24, window.innerWidth - 320);
+      const y = Math.max(24, window.innerHeight - 220);
+      return { x, y };
+    } catch {
+      const x = Math.max(24, window.innerWidth - 320);
+      const y = Math.max(24, window.innerHeight - 220);
+      return { x, y };
+    }
+  };
+
+  const [pos, setPos] = useState<{ x: number; y: number }>(getInitialPos);
 
   const dragRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
@@ -90,7 +84,9 @@ export const FocusTimer = ({
       dragging.current = false;
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
-      } catch {}
+      } catch (e) {
+        console.error(e);
+      }
     };
 
     window.addEventListener("pointermove", onMove);
@@ -128,8 +124,7 @@ export const FocusTimer = ({
       style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
       className={cn(
         "fixed left-0 top-0 z-50 w-[260px] select-none rounded-2xl border p-3 shadow-lg backdrop-blur",
-        isRunning &&
-          "shadow-[0_0_24px_rgba(99,102,241,0.25)]",
+        isRunning && "shadow-[0_0_24px_rgba(99,102,241,0.25)]",
       )}
     >
       <div
@@ -143,9 +138,7 @@ export const FocusTimer = ({
         }}
         className="flex cursor-grab items-center justify-between gap-2 rounded-xl active:cursor-grabbing"
       >
-        <div className="flex items-center gap-2">
-          
-        </div>
+        <div className="flex items-center gap-2"></div>
         <button
           onClick={onClose}
           className="rounded-lg p-1 cursor-pointer text-xs text-muted-foreground hover:bg-muted"
@@ -173,11 +166,21 @@ export const FocusTimer = ({
 
       <div className="mt-3 flex flex-wrap justify-center gap-2">
         {isRunning ? (
-          <Button size="sm" variant="outline" className="rounded-full cursor-pointer" onClick={onPause}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full cursor-pointer"
+            onClick={onPause}
+          >
             <Pause />
           </Button>
         ) : (
-          <Button size="sm" variant="outline" className="rounded-full cursor-pointer" onClick={onResume}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full cursor-pointer"
+            onClick={onResume}
+          >
             <Play />
           </Button>
         )}
@@ -190,15 +193,6 @@ export const FocusTimer = ({
         >
           <RotateCcw />
         </Button>
-
-        {/* <Button
-          size="sm"
-          variant="outline"
-          className="rounded-full"
-          onClick={onClose}
-        >
-          Hide
-        </Button> */}
       </div>
     </div>
   );

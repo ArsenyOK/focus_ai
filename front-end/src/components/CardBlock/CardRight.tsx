@@ -10,12 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Copy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import SkeletonBlock from "../SkeletonBlock/SkeletonBlock";
 import { FocusTimer } from "../FocusTimer/FocusTimer";
 import { useToastMessage } from "@/hooks/useToastMessage";
 import { ToastMessage } from "../ToastMessage/ToastMessage";
+import { FOCUS_SECONDS } from "@/lib/consts";
 
 interface CardRightProps {
   plan: {
@@ -29,6 +30,15 @@ interface CardRightProps {
   clearAll: () => void;
   changeInput: boolean;
   input: string;
+  onReset: () => void;
+  isFirstActionDone: boolean;
+  setIsFirstActionDone: (done: boolean) => void;
+  isRunning: boolean;
+  setIsRunning: (running: boolean) => void;
+  secondsLeft: number;
+  setSecondsLeft: React.Dispatch<React.SetStateAction<number>>;
+  timerOpen: boolean;
+  setTimerOpen: (open: boolean) => void;
 }
 
 const CardRight = ({
@@ -39,16 +49,18 @@ const CardRight = ({
   clearAll,
   changeInput,
   input,
+  onReset,
+  isFirstActionDone,
+  setIsFirstActionDone,
+  isRunning,
+  setIsRunning,
+  secondsLeft,
+  setSecondsLeft,
+  timerOpen,
+  setTimerOpen,
 }: CardRightProps) => {
-  const FOCUS_SECONDS = 10 * 60;
-
   const [copy, setCopy] = useState<boolean>(false);
   const { toast, showToast, hideToast } = useToastMessage();
-
-  const [isFirstActionDone, setIsFirstActionDone] = useState(false);
-  const [timerOpen, setTimerOpen] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(FOCUS_SECONDS);
 
   const onCopy = async () => {
     if (!plan) return;
@@ -89,14 +101,11 @@ const CardRight = ({
     if (secondsLeft === 0) setSecondsLeft(FOCUS_SECONDS);
     setIsRunning(true);
   };
-  const onReset = () => {
-    setIsRunning(false);
-    setSecondsLeft(FOCUS_SECONDS);
-  };
-  const onCloseTimer = () => {
+
+  const onCloseTimer = useCallback(() => {
     setTimerOpen(false);
     onReset();
-  };
+  }, [onReset, setTimerOpen]);
 
   const onDone = () => {
     setIsRunning(false);
@@ -119,11 +128,10 @@ const CardRight = ({
     if (!isRunning) return;
 
     const id = window.setInterval(() => {
-      setSecondsLeft((s) => {
+      setSecondsLeft((s: number) => {
         if (s <= 1) {
           window.clearInterval(id);
           setIsRunning(false);
-
           showToast({
             kind: "warning",
             title: "Время вышло",
@@ -137,13 +145,7 @@ const CardRight = ({
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [isRunning]);
-
-  useEffect(() => {
-    setIsFirstActionDone(false);
-    setIsRunning(false);
-    setSecondsLeft(FOCUS_SECONDS);
-  }, [plan?.firstAction]);
+  }, [isRunning, onCloseTimer, showToast, setSecondsLeft, setIsRunning]);
 
   return (
     <Card
