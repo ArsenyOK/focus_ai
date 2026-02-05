@@ -15,7 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  frontend:
+  checks:
+    name: Checks (ESLint + TypeScript)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -47,6 +48,35 @@ jobs:
 
       - name: Type check
         run: pnpm typecheck
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [checks]
+
+    defaults:
+      run:
+        working-directory: front-end
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          cache-dependency-path: front-end/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
