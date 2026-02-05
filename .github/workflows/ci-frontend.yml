@@ -1,10 +1,14 @@
 name: CI (front-end)
 
 on:
-   pull_request:
+  pull_request:
     branches: [dev]
-   push:
+    paths:
+      - "front-end/**"
+  push:
     branches: [dev]
+    paths:
+      - "front-end/**"
 
 concurrency:
   group: ci-frontend-${{ github.ref }}
@@ -40,6 +44,9 @@ jobs:
 
       - name: ESLint
         run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
 
       - name: Build
         run: pnpm build
