@@ -15,6 +15,7 @@ import CardRight from "../CardBlock/CardRight";
 import CardLeft from "../CardBlock/CardLeft";
 import { useToastMessage } from "@/hooks/useToastMessage";
 import { ToastMessage } from "../ToastMessage/ToastMessage";
+import { useKeyboardActions } from "@/hooks/useKeyboardActions";
 
 type Plan = {
   title: string;
@@ -33,6 +34,10 @@ const PageContainer = () => {
   const [includeTime, setIncludeTime] = useState(true);
   const [messageChanged, setMessageChanged] = useState<string>("");
   const { toast, showToast, hideToast } = useToastMessage();
+
+  const normalize = (v: string) => v.trim();
+
+  const canSubmit = normalize(input).length >= 5 && !loading;
 
   const remaining = 3;
 
@@ -80,8 +85,6 @@ const PageContainer = () => {
     return { plan };
   };
 
-  const normalize = (v: string) => v.trim();
-
   const hasInputChanged =
     !!messageChanged && normalize(input) === normalize(messageChanged);
 
@@ -90,6 +93,12 @@ const PageContainer = () => {
     setPlan(null);
     setLoading(false);
   };
+
+  useKeyboardActions({
+    onGenerate,
+    loading,
+    canGenerate: canSubmit,
+  });
 
   return (
     <div className="min-h-screen bg-background">
