@@ -16,6 +16,8 @@ import CardLeft from "../CardBlock/CardLeft";
 import { useToastMessage } from "@/hooks/useToastMessage";
 import { ToastMessage } from "../ToastMessage/ToastMessage";
 import { useKeyboardActions } from "@/hooks/useKeyboardActions";
+import { LanguageSwitcher } from "../LanguageSwitcher/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 type Plan = {
   title: string;
@@ -24,6 +26,8 @@ type Plan = {
 };
 
 const PageContainer = () => {
+  const { t } = useTranslation();
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -122,14 +126,15 @@ const PageContainer = () => {
             <div className="leading-tight">
               <div className="text-sm font-semibold">Focus Plan</div>
               <div className="text-xs text-muted-foreground">
-                One thought → one actionable plan
+                {t("subtitle")}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <Badge variant="secondary" className="rounded-full">
-              {remaining} free left
+              {remaining} {t("freeLeft")}
             </Badge>
 
             <Dialog>
@@ -138,13 +143,13 @@ const PageContainer = () => {
                   variant="outline"
                   className="rounded-full cursor-pointer"
                 >
-                  Upgrade
+                  {t("upgrade")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                   <DialogDescription>
-                    Billing coming soon. You’re on free plan (3/day).
+                    {t("upgradeDescription")}
                   </DialogDescription>
                 </DialogHeader>
               </DialogContent>
