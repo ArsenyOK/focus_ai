@@ -18,6 +18,7 @@ import { ToastMessage } from "../ToastMessage/ToastMessage";
 import { useKeyboardActions } from "@/hooks/useKeyboardActions";
 import { LanguageSwitcher } from "../LanguageSwitcher/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { FOCUS_SECONDS } from "@/lib/consts";
 
 type Plan = {
   title: string;
@@ -51,7 +52,7 @@ const PageContainer = () => {
 
   const onResetTimer = useCallback(() => {
     setIsRunning(false);
-    setSecondsLeft(10 * 60);
+    setSecondsLeft(FOCUS_SECONDS);
     setIsFirstActionDone(false);
   }, []);
 
@@ -76,17 +77,16 @@ const PageContainer = () => {
         setInputError(err.message ?? "Invalid input");
         showToast({
           kind: "error",
-          title: "Invalid input",
-          description: "Please add more detail.",
+          title: t("toastInvalidInput"),
+          description: t("toastInvalidInputDesc"),
         });
         return;
       }
 
       showToast({
         kind: "error",
-        title: "Something went wrong",
-        description:
-          "The server is temporarily unavailable. Please try again in a moment.",
+        title: t("toastServerError"),
+        description: t("toastServerErrorDesc"),
       });
       throw new Error(`Plan error: ${planRes.status} ${errText}`);
     }
@@ -143,7 +143,7 @@ const PageContainer = () => {
                   variant="outline"
                   className="rounded-full cursor-pointer"
                 >
-                  {t("upgrade")}
+                  Upgrade
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-sm">

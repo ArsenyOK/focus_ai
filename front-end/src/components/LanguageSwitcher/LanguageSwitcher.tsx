@@ -17,13 +17,15 @@ const langs = [
 export const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
-  const current = (["en", "ru", "uk"] as const).includes(i18n.language as any)
+  const current = (["en", "ru", "uk"] as const).includes(
+    i18n.language as "en" | "ru" | "uk",
+  )
     ? i18n.language
     : (i18n.resolvedLanguage ?? "en");
 
   return (
     <Select value={current} onValueChange={(v) => i18n.changeLanguage(v)}>
-      <SelectTrigger className="w-32">
+      <SelectTrigger className="w-25">
         <SelectValue />
       </SelectTrigger>
 

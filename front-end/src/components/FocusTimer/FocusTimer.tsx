@@ -152,9 +152,6 @@ export const FocusTimer = ({
         <div className="text-4xl font-semibold tabular-nums">
           {formatTime(secondsLeft)}
         </div>
-        {/* <div className="text-xs text-muted-foreground">
-          {secondsLeft === 0 ? "Time’s up" : isRunning ? "Running" : "Paused"}
-        </div> */}
       </div>
 
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">

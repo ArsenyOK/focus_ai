@@ -17,6 +17,7 @@ import { FocusTimer } from "../FocusTimer/FocusTimer";
 import { useToastMessage } from "@/hooks/useToastMessage";
 import { ToastMessage } from "../ToastMessage/ToastMessage";
 import { FOCUS_SECONDS } from "@/lib/consts";
+import { useTranslation } from "react-i18next";
 
 interface CardRightProps {
   plan: {
@@ -59,6 +60,8 @@ const CardRight = ({
   timerOpen,
   setTimerOpen,
 }: CardRightProps) => {
+  const { t } = useTranslation();
+
   const [copy, setCopy] = useState<boolean>(false);
   const { toast, showToast, hideToast } = useToastMessage();
 
@@ -114,8 +117,8 @@ const CardRight = ({
 
     showToast({
       kind: "success",
-      title: "Отлично!",
-      description: "Первое действие выполнено.",
+      title: t("toastSuccessMessage"),
+      description: t("toastSuccessMessageDesc"),
     });
   };
 
@@ -134,8 +137,8 @@ const CardRight = ({
           setIsRunning(false);
           showToast({
             kind: "warning",
-            title: "Время вышло",
-            description: "Закрой задачу или перезапусти 10 минут.",
+            title: t("toastTimeIsUpToast"),
+            description: t("toastTimeIsUpDesc"),
           });
           onCloseTimer();
           return 0;
@@ -145,7 +148,7 @@ const CardRight = ({
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [isRunning, onCloseTimer, showToast, setSecondsLeft, setIsRunning]);
+  }, [isRunning, onCloseTimer, showToast, setSecondsLeft, setIsRunning, t]);
 
   return (
     <Card
@@ -157,10 +160,8 @@ const CardRight = ({
     >
       <ToastMessage toast={toast} onClose={hideToast} />
       <CardHeader>
-        <CardTitle className="text-lg">Твой план</CardTitle>
-        <CardDescription>
-          Чёткие шаги. Без философии. Сразу к делу.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("rightCardTitle")}</CardTitle>
+        <CardDescription>{t("rightCardDescription")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -169,9 +170,9 @@ const CardRight = ({
             <SkeletonBlock />
           ) : (
             <div className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">
-              Нажми{" "}
+              {t("click")}{" "}
               <span className="font-medium text-foreground">Generate plan</span>{" "}
-              — тут появится результат.
+              {t("clickPhrase")}
             </div>
           )
         ) : (
@@ -198,7 +199,7 @@ const CardRight = ({
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      Copy
+                      {t("copy")}
                     </>
                   )}
                 </Button>
@@ -213,14 +214,14 @@ const CardRight = ({
                 </Button>
 
                 <Button className="rounded-full cursor-pointer" disabled>
-                  Save
+                  {t("save")}
                 </Button>
 
                 <Button
                   onClick={handleClearPlan}
                   className="rounded-full cursor-pointer"
                 >
-                  Clear
+                  {t("clear")}
                 </Button>
               </div>
             </div>
@@ -261,7 +262,7 @@ const CardRight = ({
             {!isFirstActionDone && (
               <div className="rounded-2xl border bg-muted/30 p-4">
                 <div className="text-sm font-semibold">
-                  Первое действие (10 минут)
+                  {t("firstActionMin")}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
                   {plan.firstAction}
@@ -272,14 +273,14 @@ const CardRight = ({
                     className="rounded-full cursor-pointer"
                     onClick={onStart}
                   >
-                    Start 10 min
+                    {t("startButton")}
                   </Button>
                   <Button
                     variant="secondary"
                     className="rounded-full cursor-pointer"
                     onClick={onDone}
                   >
-                    I did it
+                    {t("buttonDone")}
                   </Button>
                 </div>
               </div>
