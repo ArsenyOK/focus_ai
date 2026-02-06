@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface CardLeftProps {
   input: string;
@@ -43,15 +44,13 @@ const CardLeft = ({
   inputError,
   setInputError,
 }: CardLeftProps) => {
+  const { t } = useTranslation();
+
   return (
     <Card className="rounded-2xl hover:shadow-lg transition-shadow">
       <CardHeader>
-        <CardTitle className="text-lg">
-          Что у тебя в голове прямо сейчас?
-        </CardTitle>
-        <CardDescription>
-          Опиши хаос текстом. Мы превратим в чёткий план на 3–5 шагов.
-        </CardDescription>
+        <CardTitle className="text-lg">{t("leftCardTitle")}</CardTitle>
+        <CardDescription>{t("leftCardDescription")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -62,7 +61,7 @@ const CardLeft = ({
             if (inputError) setInputError(null);
           }}
           disabled={loading}
-          placeholder='Например: "Хочу найти работу, подтянуть английский и начать свой проект, но всё смешалось..."'
+          placeholder={t("placeholderInput")}
           className={cn(
             "min-h-[160px] resize-none rounded-2xl transition-all duration-200",
             inputError &&
@@ -83,14 +82,14 @@ const CardLeft = ({
                   value="fast"
                   className="rounded-full"
                 >
-                  Fast
+                  {t("fast")}
                 </TabsTrigger>
                 <TabsTrigger
                   disabled={loading}
                   value="deep"
                   className="rounded-full"
                 >
-                  Deep
+                  {t("deep")}
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="fast" />
@@ -108,14 +107,14 @@ const CardLeft = ({
                   value="strict"
                   className="rounded-full"
                 >
-                  Strict
+                  {t("strict")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="soft"
                   className="rounded-full"
                   disabled={loading}
                 >
-                  Soft
+                  {t("soft")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -128,7 +127,7 @@ const CardLeft = ({
                 onCheckedChange={(v) => setIncludeTime(Boolean(v))}
               />
               <Label htmlFor="time" className="text-sm text-muted-foreground">
-                Time estimates
+                {t("timeEstimates")}
               </Label>
             </div>
           </div>
@@ -136,9 +135,7 @@ const CardLeft = ({
           <Separator className="my-3" />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-xs text-muted-foreground">
-              Совет: чем честнее и проще текст, тем лучше план.
-            </div>
+            <div className="text-xs text-muted-foreground">{t("tipLeft")}</div>
             <Button
               onClick={onGenerate}
               disabled={loading || !input.trim()}
