@@ -19,6 +19,7 @@ import { useKeyboardActions } from "@/hooks/useKeyboardActions";
 import { LanguageSwitcher } from "../LanguageSwitcher/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { FOCUS_SECONDS } from "@/lib/consts";
+import { API_URL } from "@/lib/utils";
 
 type Plan = {
   title: string;
@@ -61,7 +62,7 @@ const PageContainer = () => {
     setLoading(true);
     onResetTimer();
     setTimerOpen(false);
-    const planRes = await fetch("http://localhost:5001/api/plan", {
+    const planRes = await fetch(`${API_URL}/api/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input, mode, tone, includeTime }),
