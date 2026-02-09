@@ -8,13 +8,22 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://focus-ai-kohl.vercel.app",
-    ],
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+
+      const ok =
+        origin === "http://localhost:5173" ||
+        origin === "http://localhost:3000" ||
+        origin === "https://focus-ai-kohl.vercel.app" ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin);
+
+      cb(ok ? null : new Error("Not allowed by CORS"), ok);
+    },
   }),
 );
+app.options("*", cors());
+
+app.options("*", cors());
 
 app.use(express.json({ limit: "1mb" }));
 
@@ -121,7 +130,8 @@ Rules:
   }
 });
 
-const port = Number(process.env.PORT || 5001);
-app.listen(port, () => {
-  console.log(`API running on http://localhost:${port}`);
+const port = Number(process.env.PORT) || 5001;
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`API running on port ${port}`);
 });
