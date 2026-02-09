@@ -11,7 +11,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      "https://focus-q6vzn08m5-arsenpilipenko2014gmailcoms-projects.vercel.app",
+      "https://focus-ai-kohl.vercel.app",
     ],
   }),
 );

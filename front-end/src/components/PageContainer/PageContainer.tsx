@@ -89,6 +89,8 @@ const PageContainer = () => {
         title: t("toastServerError"),
         description: t("toastServerErrorDesc"),
       });
+      setLoading(false);
+      setPlan(null);
       throw new Error(`Plan error: ${planRes.status} ${errText}`);
     }
 
