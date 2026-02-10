@@ -127,8 +127,8 @@ const PageContainer = () => {
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl border bg-muted" />
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Focus Plan</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-sm font-semibold sm:block hidden">Focus Plan</div>
+              <div className="text-xs text-muted-foreground sm:block hidden">
                 {t("subtitle")}
               </div>
             </div>
@@ -136,7 +136,7 @@ const PageContainer = () => {
 
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <Badge variant="secondary" className="rounded-full">
+            <Badge variant="secondary" className="rounded-full sm:block hidden">
               {remaining} {t("freeLeft")}
             </Badge>
 
