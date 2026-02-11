@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Pause, Play, RotateCcw, X } from "lucide-react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 type Props = {
   isOpen: boolean;
@@ -50,14 +51,16 @@ export const FocusTimer = ({
     }
   };
 
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [pos, setPos] = useState<{ x: number; y: number }>(getInitialPos);
+  const desktopStyle = { transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` };
 
   const dragRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
   const offset = useRef({ dx: 0, dy: 0 });
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !isDesktop) return;
 
     const onMove = (e: PointerEvent) => {
       if (!dragging.current) return;
@@ -96,7 +99,7 @@ export const FocusTimer = ({
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [isOpen, pos]);
+  }, [isOpen, pos, isDesktop]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,14 +124,19 @@ export const FocusTimer = ({
   return (
     <div
       ref={dragRef}
-      style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
+      style={isDesktop ? desktopStyle : undefined}
       className={cn(
-        "fixed left-0 top-0 z-50 w-[260px] select-none rounded-2xl border p-3 shadow-lg backdrop-blur",
+        "fixed z-50 w-[180px] sm:w-[260px] select-none rounded-2xl border p-3 shadow-lg backdrop-blur",
         isRunning && "shadow-[0_0_24px_rgba(99,102,241,0.25)]",
+
+        !isDesktop && "right-3 top-3",
+
+        isDesktop && "left-0 top-0",
       )}
     >
       <div
         onPointerDown={(e) => {
+          if (!isDesktop) return;
           dragging.current = true;
           const rect = dragRef.current?.getBoundingClientRect();
           offset.current = {
@@ -136,7 +144,10 @@ export const FocusTimer = ({
             dy: e.clientY - (rect?.top ?? 0),
           };
         }}
-        className="flex cursor-grab items-center justify-between gap-2 rounded-xl active:cursor-grabbing"
+        className={cn(
+          "flex items-center justify-between gap-2 rounded-xl",
+          isDesktop ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+        )}
       >
         <div className="flex items-center gap-2"></div>
         <button
@@ -144,24 +155,24 @@ export const FocusTimer = ({
           className="rounded-lg p-1 cursor-pointer text-xs text-muted-foreground hover:bg-muted"
           type="button"
         >
-          <X />
+          <X className="h-4 w-4 sm:h-5 sm:w-5 lg:h-5 lg:w-5" />
         </button>
       </div>
 
       <div className=" flex justify-center px-2">
-        <div className="text-4xl font-semibold tabular-nums">
+        <div className="text-2xl sm:text-2xl lg:text-4xl font-semibold tabular-nums">
           {formatTime(secondsLeft)}
         </div>
       </div>
 
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted lg:block hidden">
         <div
           className="h-full rounded-full transition-all duration-300 bg-black"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap justify-center gap-2">
+      <div className="mt-1 lg:mt-3 flex flex-wrap justify-center gap-2">
         {isRunning ? (
           <Button
             size="sm"
