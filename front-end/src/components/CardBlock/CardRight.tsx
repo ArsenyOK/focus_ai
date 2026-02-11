@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Copy } from "lucide-react";
+import { Check, CircleX, Copy } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import SkeletonBlock from "../SkeletonBlock/SkeletonBlock";
@@ -194,12 +194,12 @@ const CardRight = ({
                   {copy ? (
                     <>
                       <Check className="h-4 w-4 text-green-600" />
-                      Copied
+                      <span className="sm:block hidden">Copied</span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      {t("copy")}
+                      <span className="sm:block hidden">{t("copy")}</span>
                     </>
                   )}
                 </Button>
@@ -213,15 +213,16 @@ const CardRight = ({
                   Regenerate
                 </Button>
 
-                <Button className="rounded-full cursor-pointer" disabled>
+                {/* <Button className="rounded-full cursor-pointer" disabled>
                   {t("save")}
-                </Button>
+                </Button> */}
 
                 <Button
                   onClick={handleClearPlan}
                   className="rounded-full cursor-pointer"
                 >
-                  {t("clear")}
+                  <CircleX />
+                  <span className="sm:block hidden">{t("clear")}</span>
                 </Button>
               </div>
             </div>
