@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ const PageContainer = () => {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isFirstActionDone, setIsFirstActionDone] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
+  const [isPlanFocused, setIsPlanFocused] = useState(false);
 
   const normalize = (v: string) => v.trim();
 
@@ -58,6 +60,7 @@ const PageContainer = () => {
   }, []);
 
   const onGenerate = async () => {
+    setIsPlanFocused(true);
     setPlan(null);
     setLoading(true);
     onResetTimer();
@@ -70,6 +73,7 @@ const PageContainer = () => {
     setMessageChanged(input);
 
     if (!planRes.ok) {
+      setIsPlanFocused(false);
       const errText = await planRes.text();
       const err = await planRes.json().catch(() => ({}));
       setLoading(false);
@@ -89,7 +93,6 @@ const PageContainer = () => {
         title: t("toastServerError"),
         description: t("toastServerErrorDesc"),
       });
-      setLoading(false);
       setPlan(null);
       throw new Error(`Plan error: ${planRes.status} ${errText}`);
     }
@@ -111,6 +114,7 @@ const PageContainer = () => {
     setInput("");
     setPlan(null);
     setLoading(false);
+    setIsPlanFocused(false);
   };
 
   useKeyboardActions({
@@ -127,7 +131,9 @@ const PageContainer = () => {
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl border bg-muted" />
             <div className="leading-tight">
-              <div className="text-sm font-semibold sm:block hidden">Focus Plan</div>
+              <div className="text-sm font-semibold sm:block hidden">
+                Focus Plan
+              </div>
               <div className="text-xs text-muted-foreground sm:block hidden">
                 {t("subtitle")}
               </div>
@@ -162,39 +168,63 @@ const PageContainer = () => {
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-2">
-        <CardLeft
-          input={input}
-          mode={mode}
-          setMode={setMode}
-          setInput={setInput}
-          tone={tone}
-          setTone={setTone}
-          includeTime={includeTime}
-          setIncludeTime={setIncludeTime}
-          onGenerate={onGenerate}
-          loading={loading}
-          setInputError={setInputError}
-          inputError={inputError}
-        />
+        <motion.div
+          layout
+          className={
+            isPlanFocused ? "order-1 lg:order-2" : "order-2 lg:order-2"
+          }
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={loading ? "right-loading" : "right-has-plan"}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              <CardRight
+                input={input}
+                changeInput={hasInputChanged}
+                plan={plan}
+                onGenerate={onGenerate}
+                loading={loading}
+                includeTime={includeTime}
+                clearAll={clearAll}
+                onReset={onResetTimer}
+                isFirstActionDone={isFirstActionDone}
+                setIsFirstActionDone={setIsFirstActionDone}
+                isRunning={isRunning}
+                setIsRunning={setIsRunning}
+                secondsLeft={secondsLeft}
+                setSecondsLeft={setSecondsLeft}
+                timerOpen={timerOpen}
+                setTimerOpen={setTimerOpen}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
-        <CardRight
-          input={input}
-          changeInput={hasInputChanged}
-          plan={plan}
-          onGenerate={onGenerate}
-          loading={loading}
-          includeTime={includeTime}
-          clearAll={clearAll}
-          onReset={onResetTimer}
-          isFirstActionDone={isFirstActionDone}
-          setIsFirstActionDone={setIsFirstActionDone}
-          isRunning={isRunning}
-          setIsRunning={setIsRunning}
-          secondsLeft={secondsLeft}
-          setSecondsLeft={setSecondsLeft}
-          timerOpen={timerOpen}
-          setTimerOpen={setTimerOpen}
-        />
+        <motion.div
+          layout
+          className={
+            isPlanFocused ? "order-2 lg:order-1" : "order-1 lg:order-1"
+          }
+        >
+          <CardLeft
+            input={input}
+            mode={mode}
+            setMode={setMode}
+            setInput={setInput}
+            tone={tone}
+            setTone={setTone}
+            includeTime={includeTime}
+            setIncludeTime={setIncludeTime}
+            onGenerate={onGenerate}
+            loading={loading}
+            setInputError={setInputError}
+            inputError={inputError}
+          />
+        </motion.div>
       </div>
 
       <Footer />
