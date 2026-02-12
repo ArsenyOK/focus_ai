@@ -250,7 +250,10 @@ const CardRight = ({
                       </div>
 
                       {includeTime && s.eta ? (
-                        <Badge variant="secondary" className="rounded-full">
+                        <Badge
+                          variant="secondary"
+                          className="rounded-full bg-[#DAEEAB] text-xs"
+                        >
                           {s.eta}
                         </Badge>
                       ) : null}
@@ -271,8 +274,9 @@ const CardRight = ({
 
                 <div className="mt-3 flex gap-2">
                   <Button
-                    className="rounded-full cursor-pointer"
+                    className="rounded-full cursor-pointer bg-[#10B981] text-white transition-all duration-300 hover:brightness-110"
                     onClick={onStart}
+                    disabled={timerOpen}
                   >
                     {t("startButton")}
                   </Button>

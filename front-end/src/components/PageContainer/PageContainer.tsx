@@ -141,11 +141,7 @@ const PageContainer = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <Badge variant="secondary" className="rounded-full sm:block hidden">
-              {remaining} {t("freeLeft")}
-            </Badge>
-
+            <LanguageSwitcher remaining={3} />
             <Dialog>
               <DialogTrigger asChild>
                 <Button
