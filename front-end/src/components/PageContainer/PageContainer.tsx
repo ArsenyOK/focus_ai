@@ -146,7 +146,7 @@ const PageContainer = () => {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="rounded-full cursor-pointer"
+                  className="rounded-full cursor-pointer bg-gradient-to-r from-[#0F766E] via-[#10B981] to-[#A3E635] text-white transition-all duration-300 hover:brightness-110"
                 >
                   Upgrade
                 </Button>
