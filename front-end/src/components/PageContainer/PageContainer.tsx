@@ -167,7 +167,7 @@ const PageContainer = () => {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-2 items-stretch">
         <motion.div
           layout
           className={

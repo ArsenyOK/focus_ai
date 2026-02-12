@@ -47,7 +47,7 @@ const CardLeft = ({
   const { t } = useTranslation();
 
   return (
-    <Card className="rounded-2xl hover:shadow-lg transition-shadow">
+    <Card className="h-full rounded-2xl hover:shadow-lg transition-shadow">
       <CardHeader>
         <CardTitle className="text-lg">{t("leftCardTitle")}</CardTitle>
         <CardDescription>{t("leftCardDescription")}</CardDescription>
@@ -63,7 +63,7 @@ const CardLeft = ({
           disabled={loading}
           placeholder={t("placeholderInput")}
           className={cn(
-            "min-h-[160px] resize-none rounded-2xl transition-all duration-200",
+            "min-h-[160px] resize-none rounded-2xl transition-all duration-200 bg-[#FAFAFB] focus-visible:ring-ring/50 dark:bg-[#1C1C1E] dark:focus-visible:ring-ring/50",
             inputError &&
               "border-red-500 ring-2 ring-red-500/40 focus-visible:ring-red-500",
           )}
@@ -121,6 +121,7 @@ const CardLeft = ({
 
             <div className="flex items-center gap-2">
               <Switch
+                className="bg-[#398A92] data-[state=checked]:bg-[#0F766E] focus-visible:ring-[#0F766E]"
                 id="time"
                 checked={includeTime}
                 disabled={loading}
@@ -139,7 +140,7 @@ const CardLeft = ({
             <Button
               onClick={onGenerate}
               disabled={loading || !input.trim()}
-              className="rounded-full cursor-pointer"
+              className="rounded-full cursor-pointer bg-gradient-to-r from-[#0F766E] via-[#10B981] to-[#A3E635] text-white transition-all duration-300 hover:brightness-110"
             >
               {loading ? "Generating..." : "Generate plan"}
             </Button>

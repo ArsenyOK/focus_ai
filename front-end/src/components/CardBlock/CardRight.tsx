@@ -153,7 +153,7 @@ const CardRight = ({
   return (
     <Card
       className={cn(
-        "rounded-2xl hover:shadow-lg transition-shadow transition-all duration-300",
+        "h-full rounded-2xl hover:shadow-lg transition-shadow transition-all duration-300",
         loading &&
           "ring-2 ring-indigo-500 animate-[neon_1.6s_ease-in-out_infinite]",
       )}
