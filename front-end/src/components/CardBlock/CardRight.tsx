@@ -243,7 +243,7 @@ const CardRight = ({
                         </div>
 
                         {s.details && (
-                          <div className="mt-1 border-l-2 border-gray-200 pl-3">
+                          <div className="mt-1 border-l-2 border-lime-500 pl-3">
                             <p className="text-sm text-gray-700">{s.details}</p>
                           </div>
                         )}
