@@ -9,13 +9,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   ai-review:
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/ai-review')) ||
-      (github.event_name == 'pull_request')  # optional: auto-run on PR open/update
+    if: ${{ (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/ai-review')) || github.event_name == 'pull_request' }}
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4
@@ -35,77 +34,63 @@ jobs:
 
       - name: Filter too-large PRs
         run: |
-          FILES=$(jq -r '.[] | select(.status != null) | .filename' changed_files.json | wc -l)
+          FILES=$(jq -r '.[] | .filename' changed_files.json | wc -l)
           echo "files=$FILES" >> $GITHUB_OUTPUT
           if [ "$FILES" -gt 200 ]; then
-            echo "PR too large for AI review. Skipping." >&2
+            echo "PR too large for AI review. Skipping."
             exit 0
           fi
-        env:
-          GITHUB_OUTPUT: $GITHUB_OUTPUT
 
       - name: Compose review payload (grab top N changed files)
         id: compose
         run: |
-          # choose top 5 changed text files, limit size
-          jq -r '.[] | .filename' changed_files.json | head -n 5 > files.list
+          jq -r '.[] | .filename' changed_files.json | head -n 5 > files.list || true
           printf "" > review_payload.txt
           while read -r f; do
             if [ -f "$f" ]; then
               echo -e "\n\n--- FILE: $f ---\n" >> review_payload.txt
-              # take first 1000 lines/chars to limit payload
               head -n 1000 "$f" >> review_payload.txt
             fi
-          done < files.list
-          echo "::set-output name=payload::$(sed 's/%/%%/g; s/\n/\\n/g' review_payload.txt)"
-      - name: Call OpenAI (review)
-        id: openai
+          done < files.list || true
+          # store payload in a file
+          cat review_payload.txt > /tmp/review_payload.txt
+          echo "::set-output name=payload_path::/tmp/review_payload.txt"
+
+      - name: (DEBUG) Show composed payload (first 500 lines)
         run: |
-          # Simple curl example to OpenAI Chat completions (adjust for your provider)
-          PROMPT="You are an expert senior frontend engineer. Review these changed files and give concise actionable comments: describe bugs, security issues, performance problems, test gaps, and suggested fixes. Output in markdown with bullets and line references where possible.\n\n${{ steps.compose.outputs.payload }}"
+          echo "---- PAYLOAD PREVIEW ----"
+          head -n 500 /tmp/review_payload.txt || true
 
-          RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -d "$(jq -n --arg m "$PROMPT" '{
-                model: "gpt-4o-mini",
-                messages: [{role:"user", content:$m}],
-                max_tokens: 900
-              }')")
-
-          echo "$RESPONSE" > ai_response.json
-          # extract text
-          AI_TEXT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
-          echo "::set-output name=ai_text::${AI_TEXT}"
+      - name: Call OpenAI (review)
+        if: ${{ secrets.OPENAI_API_KEY != '' }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          PROMPT="You are an expert senior engineer. Review these changed files and give concise actionable comments:\n\n$(sed -n '1,2000p' /tmp/review_payload.txt)"
+          RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d "$(jq -n --arg m "$PROMPT" '{model: "gpt-4o-mini", messages:[{role:"user", content:$m}], max_tokens:900}')")
+          echo "$RESPONSE" > /tmp/ai_response.json
+          AI_TEXT=$(jq -r '.choices[0].message.content // ""' /tmp/ai_response.json)
+          echo "::set-output name=ai_text::${AI_TEXT}"
 
       - name: Post review comment to PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const pr = context.payload.pull_request ?? (await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${context.ref.split('/').slice(2).join('/')}`
-            })).data[0];
-            const body = `## 🤖 AI Review\n\n${process.env.AI_TEXT}`;
-            if (pr && pr.number) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body
-              });
+            const prNumber = context.issue.number || (context.payload.pull_request && context.payload.pull_request.number);
+            const body = `## 🤖 AI Review\n\n${process.env.AI_TEXT || 'No AI output (maybe no OPENAI_API_KEY set).'}`;
+            if (!prNumber) {
+              core.setFailed('Cannot determine PR/issue number to comment on.');
             } else {
-              // fallback: comment on issue (for issue_comment trigger)
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body
               });
             }
         env:
-          AI_TEXT: ${{ steps.openai.outputs.ai_text }}
+          AI_TEXT: ${{ steps.call_openai.outputs.ai_text || '' }}
