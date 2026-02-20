@@ -19,14 +19,15 @@ jobs:
         run: |
           echo "Event: $GITHUB_EVENT_NAME"
           echo "Actor: $GITHUB_ACTOR"
-          echo "Comment body: ${{ github.event.comment && github.event.comment.body || '' }}"
-          echo "Is this from a PR?: ${GITHUB_REF}"
+          # show comment body if present (may be empty for some events)
+          echo "Comment body: '${{ github.event.comment && github.event.comment.body || '' }}'"
+          echo "Ref: $GITHUB_REF"
+
       - name: Check for /ai-review trigger
         id: check_trigger
         run: |
           BODY="${{ github.event.comment && github.event.comment.body || '' }}"
           echo "body>>$BODY<<"
-          echo "::set-output name=body::$BODY"
           if echo "$BODY" | grep -iq '/ai-review'; then
             echo "triggered=true" >> $GITHUB_OUTPUT
           else
@@ -50,7 +51,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = `🤖 **AI Review started** — gathering changed files and running checks... (triggered by @${context.payload.comment.user.login})`;
+            const body = `🤖 **AI Review started** — gathering changed files and running checks... (triggered by @${context.payload.comment ? context.payload.comment.user.login : context.actor})`;
             const issue_number = context.issue.number;
             const resp = await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -59,8 +60,6 @@ jobs:
               body
             });
             return resp.data.id;
-      - name: Save comment id
-        run: echo "comment_id=${{ steps.create_comment.result }}" >> $GITHUB_OUTPUT
 
       - name: Get changed files (PR)
         id: changed
@@ -69,8 +68,8 @@ jobs:
           format: "json"
 
       - name: Compose payload (top 10 text files)
-        id: compose
         run: |
+          # write list
           jq -r '.[] | .filename' changed_files.json > files_list.txt || true
           head -n 10 files_list.txt > files_top.txt || true
           printf "" > /tmp/review_payload.txt
@@ -78,61 +77,77 @@ jobs:
             [ -z "$f" ] && continue
             if [ -f "$f" ]; then
               echo -e "\n\n--- FILE: $f ---\n" >> /tmp/review_payload.txt
-              # limit to first 2000 lines/characters to avoid huge payloads
               head -n 2000 "$f" >> /tmp/review_payload.txt
             fi
           done < files_top.txt || true
-          # if nothing found, add a message
           if [ ! -s /tmp/review_payload.txt ]; then
             echo "(No changed files found or files are binary.)" > /tmp/review_payload.txt
           fi
-          echo "::set-output name=payload_path::/tmp/review_payload.txt"
+          echo "Payload saved to /tmp/review_payload.txt"
+          echo "---- preview ----"
+          head -n 80 /tmp/review_payload.txt || true
 
-      - name: (DEBUG) Show payload head
-        run: |
-          echo "---- payload head ----"
-          head -n 200 /tmp/review_payload.txt || true
-
-      - name: Call OpenAI (if key present)
-        id: call_openai
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
+      - name: Call OpenAI or write fallback (single script)
+        id: call_openai_or_fallback
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PROMPT="You are a senior frontend engineer. Review changed files below and provide: 1) concise summary of issues (bugs, security, performance, tests missing), 2) actionable recommendations with file references where possible. Keep under 900 tokens."
-          PROMPT="${PROMPT}\n\n$(sed -n '1,2000p' /tmp/review_payload.txt)"
+          # final output path (we always write this file)
+          OUT=/tmp/ai_text.txt
+          PAYLOAD=/tmp/review_payload.txt
+
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OpenAI key not set in repo secrets." > "$OUT"
+            echo "" >> "$OUT"
+            echo "Payload preview:" >> "$OUT"
+            head -n 200 "$PAYLOAD" >> "$OUT"
+            echo "WROTE fallback to $OUT"
+            exit 0
+          fi
+
+          # build prompt (keep it compact)
+          PROMPT="You are a senior frontend engineer. Review changed files and provide a concise summary of issues (bugs, security, performance, tests missing) and actionable recommendations with file references where possible. Keep reply concise."
+
+          # include some of the payload (limit)
+          CODE_SNIPPET=$(sed -n '1,2000p' "$PAYLOAD" | sed 's/"/\\"/g')
+          FULL_PROMPT="$PROMPT\n\n$CODE_SNIPPET"
+
+          # call OpenAI Chat Completions
           RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -d "$(jq -n --arg m "$PROMPT" '{model: "gpt-4o-mini", messages:[{role:"user", content:$m}], max_tokens:900}')")
-          echo "$RESPONSE" > /tmp/ai_response.json
-          AI_TEXT=$(jq -r '.choices[0].message.content // empty' /tmp/ai_response.json)
-          if [ -z "$AI_TEXT" ]; then
-            AI_TEXT="(OpenAI returned empty response)"
-          fi
-          echo "$AI_TEXT" > /tmp/ai_text.txt
-          echo "::set-output name=ai_text_path::/tmp/ai_text.txt"
+            -d "$(jq -n --arg m "$FULL_PROMPT" '{model:"gpt-4o-mini", messages:[{role:"user", content:$m}], max_tokens:900}')")
 
-      - name: Fallback message if OpenAI key missing
-        if: ${{ secrets.OPENAI_API_KEY == '' }}
-        run: |
-          echo "OpenAI key not set. To enable real AI review, add OPENAI_API_KEY to repo secrets." > /tmp/ai_text.txt
-          echo "" >> /tmp/ai_text.txt
-          echo "Payload preview:" >> /tmp/ai_text.txt
-          head -n 200 /tmp/review_payload.txt >> /tmp/ai_text.txt
-          echo "::set-output name=ai_text_path::/tmp/ai_text.txt"
+          # extract text; if empty, fallback to response raw
+          AI_TEXT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          if [ -z "$AI_TEXT" ]; then
+            echo "OpenAI returned empty or error. Raw response saved below." > "$OUT"
+            echo "" >> "$OUT"
+            echo "$RESPONSE" >> "$OUT"
+            exit 0
+          fi
+
+          # write trimmed AI output
+          echo "$AI_TEXT" > "$OUT"
+          echo "WROTE AI output to $OUT"
 
       - name: Post final review (update initial comment)
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commentId = parseInt(process.env.COMMENT_ID || '${{ steps.create_comment.result }}', 10);
-            const issue_number = context.issue.number;
             const fs = require('fs');
-            const text = fs.readFileSync('${{ steps.call_openai.outputs.ai_text_path || steps.compose.outputs.payload_path || "/tmp/ai_text.txt" }}', 'utf8')
-                          .slice(0, 32000); // trim for GitHub
+            const OUT_PATH = '/tmp/ai_text.txt';
+            let text = '(<no output found>)';
+            try {
+              text = fs.readFileSync(OUT_PATH, 'utf8').toString();
+            } catch (e) {
+              text = '(failed to read AI output file)';
+            }
+            // trim to safe size for GitHub comment
+            if (text.length > 30000) text = text.slice(0, 30000) + "\n\n*(truncated)*";
             const body = `## 🤖 AI Review — result\n\n${text}\n\n*If output is empty or truncated, check Actions logs.*`;
+            const commentId = parseInt('${{ steps.create_comment.result }}', 10) || null;
             if (commentId) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -144,9 +159,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number,
+                issue_number: context.issue.number,
                 body
               });
             }
-        env:
-          COMMENT_ID: ${{ steps.create_comment.result }}
