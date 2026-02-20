@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -50,8 +49,6 @@ const PageContainer = () => {
   const normalize = (v: string) => v.trim();
 
   const canSubmit = normalize(input).length >= 5 && !loading;
-
-  const remaining = 3;
 
   const onResetTimer = useCallback(() => {
     setIsRunning(false);
@@ -141,16 +138,12 @@ const PageContainer = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <Badge variant="secondary" className="rounded-full sm:block hidden">
-              {remaining} {t("freeLeft")}
-            </Badge>
-
+            <LanguageSwitcher remaining={3} />
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="rounded-full cursor-pointer"
+                  className="rounded-full cursor-pointer bg-gradient-to-r from-[#0F766E] via-[#10B981] to-[#A3E635] text-white transition-all duration-300 hover:brightness-110"
                 >
                   Upgrade
                 </Button>
@@ -167,7 +160,7 @@ const PageContainer = () => {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-2 items-stretch">
         <motion.div
           layout
           className={
