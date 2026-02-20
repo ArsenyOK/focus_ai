@@ -17,11 +17,9 @@ jobs:
     steps:
       - name: Print trigger info
         run: |
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "Actor: $GITHUB_ACTOR"
-          # show comment body if present (may be empty for some events)
-          echo "Comment body: '${{ github.event.comment && github.event.comment.body || '' }}'"
-          echo "Ref: $GITHUB_REF"
+          echo "EVENT: $GITHUB_EVENT_NAME"
+          echo "ACTOR: $GITHUB_ACTOR"
+          echo "COMMENT_BODY: '${{ github.event.comment && github.event.comment.body || '' }}'"
 
       - name: Check for /ai-review trigger
         id: check_trigger
@@ -69,7 +67,6 @@ jobs:
 
       - name: Compose payload (top 10 text files)
         run: |
-          # write list
           jq -r '.[] | .filename' changed_files.json > files_list.txt || true
           head -n 10 files_list.txt > files_top.txt || true
           printf "" > /tmp/review_payload.txt
@@ -84,7 +81,6 @@ jobs:
             echo "(No changed files found or files are binary.)" > /tmp/review_payload.txt
           fi
           echo "Payload saved to /tmp/review_payload.txt"
-          echo "---- preview ----"
           head -n 80 /tmp/review_payload.txt || true
 
       - name: Call OpenAI or write fallback (single script)
@@ -92,7 +88,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          # final output path (we always write this file)
           OUT=/tmp/ai_text.txt
           PAYLOAD=/tmp/review_payload.txt
 
@@ -101,33 +96,27 @@ jobs:
             echo "" >> "$OUT"
             echo "Payload preview:" >> "$OUT"
             head -n 200 "$PAYLOAD" >> "$OUT"
-            echo "WROTE fallback to $OUT"
             exit 0
           fi
 
-          # build prompt (keep it compact)
           PROMPT="You are a senior frontend engineer. Review changed files and provide a concise summary of issues (bugs, security, performance, tests missing) and actionable recommendations with file references where possible. Keep reply concise."
 
-          # include some of the payload (limit)
           CODE_SNIPPET=$(sed -n '1,2000p' "$PAYLOAD" | sed 's/"/\\"/g')
           FULL_PROMPT="$PROMPT\n\n$CODE_SNIPPET"
 
-          # call OpenAI Chat Completions
           RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             -d "$(jq -n --arg m "$FULL_PROMPT" '{model:"gpt-4o-mini", messages:[{role:"user", content:$m}], max_tokens:900}')")
 
-          # extract text; if empty, fallback to response raw
           AI_TEXT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           if [ -z "$AI_TEXT" ]; then
-            echo "OpenAI returned empty or error. Raw response saved below." > "$OUT"
+            echo "OpenAI returned empty or error. Raw response below." > "$OUT"
             echo "" >> "$OUT"
             echo "$RESPONSE" >> "$OUT"
             exit 0
           fi
 
-          # write trimmed AI output
           echo "$AI_TEXT" > "$OUT"
           echo "WROTE AI output to $OUT"
 
@@ -138,14 +127,13 @@ jobs:
           script: |
             const fs = require('fs');
             const OUT_PATH = '/tmp/ai_text.txt';
-            let text = '(<no output found>)';
+            let text = '(no output)';
             try {
               text = fs.readFileSync(OUT_PATH, 'utf8').toString();
             } catch (e) {
               text = '(failed to read AI output file)';
             }
-            // trim to safe size for GitHub comment
-            if (text.length > 30000) text = text.slice(0, 30000) + "\n\n*(truncated)*";
+            if (text.length > 30000) text = text.slice(0,30000) + "\n\n*(truncated)*";
             const body = `## 🤖 AI Review — result\n\n${text}\n\n*If output is empty or truncated, check Actions logs.*`;
             const commentId = parseInt('${{ steps.create_comment.result }}', 10) || null;
             if (commentId) {
