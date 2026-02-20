@@ -3,94 +3,150 @@ name: AI PR Review on Comment
 on:
   issue_comment:
     types: [created, edited]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  pull_request_review_comment:
+    types: [created, edited]
 
 permissions:
   contents: read
-  pull-requests: write
   issues: write
+  pull-requests: read
 
 jobs:
   ai-review:
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/ai-review')) || github.event_name == 'pull_request' }}
     steps:
-      - name: Checkout PR
+      - name: Print trigger info
+        run: |
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Comment body: ${{ github.event.comment && github.event.comment.body || '' }}"
+          echo "Is this from a PR?: ${GITHUB_REF}"
+      - name: Check for /ai-review trigger
+        id: check_trigger
+        run: |
+          BODY="${{ github.event.comment && github.event.comment.body || '' }}"
+          echo "body>>$BODY<<"
+          echo "::set-output name=body::$BODY"
+          if echo "$BODY" | grep -iq '/ai-review'; then
+            echo "triggered=true" >> $GITHUB_OUTPUT
+          else
+            echo "triggered=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Exit early if not triggered
+        if: ${{ steps.check_trigger.outputs.triggered == 'false' }}
+        run: |
+          echo "No /ai-review found — skipping."
+          exit 0
+
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Node 18
-        uses: actions/setup-node@v4
+      - name: Create initial "started" comment
+        id: create_comment
+        uses: actions/github-script@v7
         with:
-          node-version: "18"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `🤖 **AI Review started** — gathering changed files and running checks... (triggered by @${context.payload.comment.user.login})`;
+            const issue_number = context.issue.number;
+            const resp = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body
+            });
+            return resp.data.id;
+      - name: Save comment id
+        run: echo "comment_id=${{ steps.create_comment.result }}" >> $GITHUB_OUTPUT
 
-      - name: Get list of changed files
+      - name: Get changed files (PR)
         id: changed
         uses: tj-actions/changed-files@v34
         with:
           format: "json"
 
-      - name: Filter too-large PRs
-        run: |
-          FILES=$(jq -r '.[] | .filename' changed_files.json | wc -l)
-          echo "files=$FILES" >> $GITHUB_OUTPUT
-          if [ "$FILES" -gt 200 ]; then
-            echo "PR too large for AI review. Skipping."
-            exit 0
-          fi
-
-      - name: Compose review payload (grab top N changed files)
+      - name: Compose payload (top 10 text files)
         id: compose
         run: |
-          jq -r '.[] | .filename' changed_files.json | head -n 5 > files.list || true
-          printf "" > review_payload.txt
+          jq -r '.[] | .filename' changed_files.json > files_list.txt || true
+          head -n 10 files_list.txt > files_top.txt || true
+          printf "" > /tmp/review_payload.txt
           while read -r f; do
+            [ -z "$f" ] && continue
             if [ -f "$f" ]; then
-              echo -e "\n\n--- FILE: $f ---\n" >> review_payload.txt
-              head -n 1000 "$f" >> review_payload.txt
+              echo -e "\n\n--- FILE: $f ---\n" >> /tmp/review_payload.txt
+              # limit to first 2000 lines/characters to avoid huge payloads
+              head -n 2000 "$f" >> /tmp/review_payload.txt
             fi
-          done < files.list || true
-          # store payload in a file
-          cat review_payload.txt > /tmp/review_payload.txt
+          done < files_top.txt || true
+          # if nothing found, add a message
+          if [ ! -s /tmp/review_payload.txt ]; then
+            echo "(No changed files found or files are binary.)" > /tmp/review_payload.txt
+          fi
           echo "::set-output name=payload_path::/tmp/review_payload.txt"
 
-      - name: (DEBUG) Show composed payload (first 500 lines)
+      - name: (DEBUG) Show payload head
         run: |
-          echo "---- PAYLOAD PREVIEW ----"
-          head -n 500 /tmp/review_payload.txt || true
+          echo "---- payload head ----"
+          head -n 200 /tmp/review_payload.txt || true
 
-      - name: Call OpenAI (review)
+      - name: Call OpenAI (if key present)
+        id: call_openai
         if: ${{ secrets.OPENAI_API_KEY != '' }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PROMPT="You are an expert senior engineer. Review these changed files and give concise actionable comments:\n\n$(sed -n '1,2000p' /tmp/review_payload.txt)"
+          PROMPT="You are a senior frontend engineer. Review changed files below and provide: 1) concise summary of issues (bugs, security, performance, tests missing), 2) actionable recommendations with file references where possible. Keep under 900 tokens."
+          PROMPT="${PROMPT}\n\n$(sed -n '1,2000p' /tmp/review_payload.txt)"
           RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             -d "$(jq -n --arg m "$PROMPT" '{model: "gpt-4o-mini", messages:[{role:"user", content:$m}], max_tokens:900}')")
           echo "$RESPONSE" > /tmp/ai_response.json
-          AI_TEXT=$(jq -r '.choices[0].message.content // ""' /tmp/ai_response.json)
-          echo "::set-output name=ai_text::${AI_TEXT}"
+          AI_TEXT=$(jq -r '.choices[0].message.content // empty' /tmp/ai_response.json)
+          if [ -z "$AI_TEXT" ]; then
+            AI_TEXT="(OpenAI returned empty response)"
+          fi
+          echo "$AI_TEXT" > /tmp/ai_text.txt
+          echo "::set-output name=ai_text_path::/tmp/ai_text.txt"
 
-      - name: Post review comment to PR
+      - name: Fallback message if OpenAI key missing
+        if: ${{ secrets.OPENAI_API_KEY == '' }}
+        run: |
+          echo "OpenAI key not set. To enable real AI review, add OPENAI_API_KEY to repo secrets." > /tmp/ai_text.txt
+          echo "" >> /tmp/ai_text.txt
+          echo "Payload preview:" >> /tmp/ai_text.txt
+          head -n 200 /tmp/review_payload.txt >> /tmp/ai_text.txt
+          echo "::set-output name=ai_text_path::/tmp/ai_text.txt"
+
+      - name: Post final review (update initial comment)
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.issue.number || (context.payload.pull_request && context.payload.pull_request.number);
-            const body = `## 🤖 AI Review\n\n${process.env.AI_TEXT || 'No AI output (maybe no OPENAI_API_KEY set).'}`;
-            if (!prNumber) {
-              core.setFailed('Cannot determine PR/issue number to comment on.');
+            const commentId = parseInt(process.env.COMMENT_ID || '${{ steps.create_comment.result }}', 10);
+            const issue_number = context.issue.number;
+            const fs = require('fs');
+            const text = fs.readFileSync('${{ steps.call_openai.outputs.ai_text_path || steps.compose.outputs.payload_path || "/tmp/ai_text.txt" }}', 'utf8')
+                          .slice(0, 32000); // trim for GitHub
+            const body = `## 🤖 AI Review — result\n\n${text}\n\n*If output is empty or truncated, check Actions logs.*`;
+            if (commentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: commentId,
+                body
+              });
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
+                issue_number,
                 body
               });
             }
         env:
-          AI_TEXT: ${{ steps.call_openai.outputs.ai_text || '' }}
+          COMMENT_ID: ${{ steps.create_comment.result }}
