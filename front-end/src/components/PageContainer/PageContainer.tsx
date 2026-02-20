@@ -48,6 +48,8 @@ const PageContainer = () => {
 
   const normalize = (v: string) => v.trim();
 
+  console.info(123);
+
   const canSubmit = normalize(input).length >= 5 && !loading;
 
   const onResetTimer = useCallback(() => {
