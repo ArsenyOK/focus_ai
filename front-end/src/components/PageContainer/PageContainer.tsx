@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -50,8 +49,6 @@ const PageContainer = () => {
   const normalize = (v: string) => v.trim();
 
   const canSubmit = normalize(input).length >= 5 && !loading;
-
-  const remaining = 3;
 
   const onResetTimer = useCallback(() => {
     setIsRunning(false);
