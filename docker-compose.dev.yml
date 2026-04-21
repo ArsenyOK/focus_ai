@@ -4,7 +4,7 @@ services:
   server:
     build:
       context: ./server
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: server-dev
     ports:
       - "5001:5001"
@@ -19,7 +19,7 @@ services:
   front-end:
     build:
       context: ./front-end
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: frontend-dev
     ports:
       - "5173:5173"

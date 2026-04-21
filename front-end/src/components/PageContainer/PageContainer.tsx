@@ -14,6 +14,7 @@ import Footer from "../Footer/Footer";
 import CardRight from "../CardBlock/CardRight";
 import CardLeft from "../CardBlock/CardLeft";
 import { useToastMessage } from "@/hooks/useToastMessage";
+
 import { ToastMessage } from "../ToastMessage/ToastMessage";
 import { useKeyboardActions } from "@/hooks/useKeyboardActions";
 import { LanguageSwitcher } from "../LanguageSwitcher/LanguageSwitcher";
@@ -62,7 +63,7 @@ const PageContainer = () => {
     setLoading(true);
     onResetTimer();
     setTimerOpen(false);
-    const planRes = await fetch(`${API_URL}/api/plan`, {
+    const planRes = await fetch(`${API_URL}/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input, mode, tone, includeTime }),
@@ -73,6 +74,7 @@ const PageContainer = () => {
       setIsPlanFocused(false);
       const errText = await planRes.text();
       const err = await planRes.json().catch(() => ({}));
+
       setLoading(false);
 
       if (planRes.status === 400) {

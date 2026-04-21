@@ -1,15 +1,28 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
-
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
 COPY . .
+RUN pnpm run build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/dist ./dist
+
+ENV NODE_ENV=production
 
 EXPOSE 5001
 
-CMD ["pnpm", "run", "dev"]
+CMD ["pnpm", "run", "start"]

@@ -6,22 +6,24 @@ import OpenAI from "openai";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
+if (process.env.NODE_ENV !== "production") {
+  app.use(
+    cors({
+      origin: (origin, cb) => {
+        if (!origin) return cb(null, true);
 
-      const ok =
-        origin === "http://localhost:5173" ||
-        origin === "http://localhost:3000" ||
-        origin === "https://focus-ai-kohl.vercel.app" ||
-        /^https:\/\/.*\.vercel\.app$/.test(origin);
+        const ok =
+          origin === "http://localhost:5173" ||
+          origin === "http://localhost:3000" ||
+          origin === "https://focus-ai-kohl.vercel.app" ||
+          /^https:\/\/.*\.vercel\.app$/.test(origin);
 
-      cb(ok ? null : new Error("Not allowed by CORS"), ok);
-    },
-  }),
-);
-app.options(/.*/, cors());
+        cb(ok ? null : new Error("Not allowed by CORS"), ok);
+      },
+    }),
+  );
+  app.options(/.*/, cors());
+}
 
 app.use(express.json({ limit: "1mb" }));
 
