@@ -32,3 +32,19 @@ logs/
 tmp/
 .cache/
 coverage/
+
+
+# ======================
+# Terraform
+# ======================
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Sensitive variables
+*.tfvars
+*.tfvars.json
+
+# Exceptions
+!terraform.tfvars.example

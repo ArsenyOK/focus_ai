@@ -1,0 +1,54 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - docker.io
+  - git
+  - curl
+
+write_files:
+  - path: /opt/focus-ai/setup.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e
+
+      APP_DIR="/opt/focus-ai/app"
+      REPO_URL="https://github.com/ArsenyOK/focus_ai.git"
+
+      systemctl enable docker
+      systemctl start docker
+
+      if ! command -v docker >/dev/null 2>&1; then
+        echo "Docker not installed"
+        exit 1
+      fi
+
+      if ! docker compose version >/dev/null 2>&1; then
+        mkdir -p /usr/local/lib/docker/cli-plugins
+        curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+        chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+      fi
+
+      mkdir -p /opt/focus-ai
+
+      if [ ! -d "$APP_DIR" ]; then
+        git clone "$REPO_URL" "$APP_DIR"
+      else
+        cd "$APP_DIR"
+        git pull
+      fi
+
+      cat > "$APP_DIR/.env" <<EOF
+      OPENAI_API_KEY=${openai_api_key}
+      OPENAI_MODEL=${openai_model}
+      PORT=5001
+      VITE_API_URL=/api
+      EOF
+
+      cd "$APP_DIR"
+      docker compose up -d --build
+
+runcmd:
+  - bash /opt/focus-ai/setup.sh
