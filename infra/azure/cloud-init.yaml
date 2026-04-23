@@ -43,8 +43,6 @@ write_files:
       cat > "$APP_DIR/.env" <<EOF
       OPENAI_API_KEY=${openai_api_key}
       OPENAI_MODEL=${openai_model}
-      PORT=5001
-      VITE_API_URL=/api
       EOF
 
       cd "$APP_DIR"
